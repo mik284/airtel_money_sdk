@@ -62,22 +62,30 @@ defmodule AirtelMoney.Client do
   defp default_headers do
     [
       {"content-type", "application/json"},
-      {"accept", "*/*"},
-      {"x-country", Application.get_env(:airtel_money, :country, "")},
-      {"x-currency", Application.get_env(:airtel_money, :currency, "")}
+      {"accept", "*/*"}
     ]
   end
 
   defp signature_headers(config) do
-    if Map.get(config, :country) == "CD" do
+    country = Map.get(config, :country)
+    currency = Map.get(config, :currency)
+
+    headers = []
+
+    # Add X-Country and X-Currency headers for all markets
+    headers = maybe_add_header(headers, "X-Country", country)
+    headers = maybe_add_header(headers, "X-Currency", currency)
+
+    # Add signature headers for DRC market
+    if country == "CD" do
       signature = Application.get_env(:airtel_money, :x_signature)
       key = Application.get_env(:airtel_money, :x_key)
 
-      []
+      headers
       |> maybe_add_header("x-signature", signature)
       |> maybe_add_header("x-key", key)
     else
-      []
+      headers
     end
   end
 
