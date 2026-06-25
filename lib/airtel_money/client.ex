@@ -24,36 +24,8 @@ defmodule AirtelMoney.Client do
     endpoint = Keyword.fetch!(opts, :endpoint)
     config = Keyword.fetch!(opts, :config)
 
-    start_time = System.monotonic_time(:millisecond)
-
-    req =
-      Req.new(
-        base_url: AirtelMoney.Config.base_url(config),
-        auth: {:bearer, token},
-        headers: default_headers(),
-        retry: :transient,
-        retry_delay: &retry_delay/1,
-        max_retries: 3,
-        receive_timeout: Map.get(config, :timeout, 15_000)
-      )
-
-    case Req.get(req, url: url) do
-      {:ok, %{status: status, body: body}} when status in 200..299 ->
-        duration = System.monotonic_time(:millisecond) - start_time
-        emit_telemetry(:success, endpoint, duration, status)
-        {:ok, body}
-
-      {:ok, %{status: status, body: body}} ->
-        duration = System.monotonic_time(:millisecond) - start_time
-        emit_telemetry(:failure, endpoint, duration, status)
-        {:error, AirtelMoney.Error.from_response(body, status)}
-
-      {:error, exception} ->
-        duration = System.monotonic_time(:millisecond) - start_time
-        emit_telemetry(:failure, endpoint, duration, nil)
-        Logger.error("Airtel Money request failed: #{Exception.message(exception)}")
-        {:error, AirtelMoney.Error.from_message(Exception.message(exception))}
-    end
+    req = build_request(config, auth: {:bearer, token}, headers: default_headers())
+    execute_request(req, :get, url, endpoint)
   end
 
   @doc """
@@ -73,37 +45,8 @@ defmodule AirtelMoney.Client do
     config = Keyword.fetch!(opts, :config)
     body = Keyword.fetch!(opts, :body)
 
-    start_time = System.monotonic_time(:millisecond)
-
-    req =
-      Req.new(
-        base_url: AirtelMoney.Config.base_url(config),
-        auth: {:bearer, token},
-        headers: default_headers(),
-        retry: :transient,
-        retry_delay: &retry_delay/1,
-        max_retries: 3,
-        receive_timeout: Map.get(config, :timeout, 15_000),
-        json: body
-      )
-
-    case Req.post(req, url: url) do
-      {:ok, %{status: status, body: response_body}} when status in 200..299 ->
-        duration = System.monotonic_time(:millisecond) - start_time
-        emit_telemetry(:success, endpoint, duration, status)
-        {:ok, response_body}
-
-      {:ok, %{status: status, body: response_body}} ->
-        duration = System.monotonic_time(:millisecond) - start_time
-        emit_telemetry(:failure, endpoint, duration, status)
-        {:error, AirtelMoney.Error.from_response(response_body, status)}
-
-      {:error, exception} ->
-        duration = System.monotonic_time(:millisecond) - start_time
-        emit_telemetry(:failure, endpoint, duration, nil)
-        Logger.error("Airtel Money request failed: #{Exception.message(exception)}")
-        {:error, AirtelMoney.Error.from_message(Exception.message(exception))}
-    end
+    req = build_request(config, auth: {:bearer, token}, headers: default_headers(), json: body)
+    execute_request(req, :post, url, endpoint)
   end
 
   @doc """
@@ -111,36 +54,8 @@ defmodule AirtelMoney.Client do
   """
   @spec post_token(String.t(), map(), map()) :: {:ok, map()} | {:error, AirtelMoney.Error.t()}
   def post_token(url, body, config) do
-    start_time = System.monotonic_time(:millisecond)
-
-    req =
-      Req.new(
-        base_url: AirtelMoney.Config.base_url(config),
-        headers: token_headers(),
-        retry: :transient,
-        retry_delay: &retry_delay/1,
-        max_retries: 3,
-        receive_timeout: Map.get(config, :timeout, 15_000),
-        json: body
-      )
-
-    case Req.post(req, url: url) do
-      {:ok, %{status: status, body: response_body}} when status in 200..299 ->
-        duration = System.monotonic_time(:millisecond) - start_time
-        emit_telemetry(:success, :token, duration, status)
-        {:ok, response_body}
-
-      {:ok, %{status: status, body: response_body}} ->
-        duration = System.monotonic_time(:millisecond) - start_time
-        emit_telemetry(:failure, :token, duration, status)
-        {:error, AirtelMoney.Error.from_response(response_body, status)}
-
-      {:error, exception} ->
-        duration = System.monotonic_time(:millisecond) - start_time
-        emit_telemetry(:failure, :token, duration, nil)
-        Logger.error("Airtel Money token request failed: #{Exception.message(exception)}")
-        {:error, AirtelMoney.Error.from_message(Exception.message(exception))}
-    end
+    req = build_request(config, headers: token_headers(), json: body)
+    execute_request(req, :post, url, :token)
   end
 
   defp default_headers do
@@ -170,5 +85,45 @@ defmodule AirtelMoney.Client do
       %{duration: duration},
       %{endpoint: endpoint, status: status}
     )
+  end
+
+  defp build_request(config, opts) do
+    base_opts = [
+      base_url: AirtelMoney.Config.base_url(config),
+      retry: :transient,
+      retry_delay: &retry_delay/1,
+      max_retries: 3,
+      receive_timeout: Map.get(config, :timeout, 15_000)
+    ]
+
+    Req.new(Keyword.merge(base_opts, opts))
+  end
+
+  defp execute_request(req, method, url, endpoint) do
+    start_time = System.monotonic_time(:millisecond)
+    response = Req.request(req, method: method, url: url)
+    handle_response(response, start_time, endpoint)
+  end
+
+  defp handle_response({:ok, %{status: status, body: body}}, start_time, endpoint)
+       when status in 200..299 do
+    emit_telemetry_for_response(:success, endpoint, start_time, status)
+    {:ok, body}
+  end
+
+  defp handle_response({:ok, %{status: status, body: body}}, start_time, endpoint) do
+    emit_telemetry_for_response(:failure, endpoint, start_time, status)
+    {:error, AirtelMoney.Error.from_response(body, status)}
+  end
+
+  defp handle_response({:error, exception}, start_time, endpoint) do
+    emit_telemetry_for_response(:failure, endpoint, start_time, nil)
+    Logger.error("Airtel Money request failed: #{Exception.message(exception)}")
+    {:error, AirtelMoney.Error.from_message(Exception.message(exception))}
+  end
+
+  defp emit_telemetry_for_response(event, endpoint, start_time, status) do
+    duration = System.monotonic_time(:millisecond) - start_time
+    emit_telemetry(event, endpoint, duration, status)
   end
 end

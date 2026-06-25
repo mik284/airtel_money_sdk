@@ -36,8 +36,7 @@ defmodule AirtelMoney.Webhooks.Verifier do
   end
 
   defp compute_signature(payload, secret) do
-    :crypto.mac(:hmac, :sha256, secret, payload)
-    |> Base.encode16(case: :lower)
+    Base.encode16(:crypto.mac(:hmac, :sha256, secret, payload), case: :lower)
   end
 
   # Constant-time comparison to prevent timing attacks

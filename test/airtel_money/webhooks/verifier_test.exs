@@ -2,16 +2,17 @@ defmodule AirtelMoney.Webhooks.VerifierTest do
   use ExUnit.Case
   doctest AirtelMoney.Webhooks.Verifier
 
+  alias AirtelMoney.Webhooks.Verifier
+
   describe "verify/3" do
     test "verifies valid signature" do
       payload = "{\"transaction_id\":\"123\"}"
       secret = "test_secret"
 
       signature =
-        :crypto.mac(:hmac, :sha256, secret, payload)
-        |> Base.encode16(case: :lower)
+        Base.encode16(:crypto.mac(:hmac, :sha256, secret, payload), case: :lower)
 
-      assert AirtelMoney.Webhooks.Verifier.verify(payload, signature, secret) == :ok
+      assert Verifier.verify(payload, signature, secret) == :ok
     end
 
     test "rejects invalid signature" do
@@ -19,7 +20,7 @@ defmodule AirtelMoney.Webhooks.VerifierTest do
       secret = "test_secret"
       signature = "invalid_signature"
 
-      assert AirtelMoney.Webhooks.Verifier.verify(payload, signature, secret) ==
+      assert Verifier.verify(payload, signature, secret) ==
                {:error, :invalid_signature}
     end
 
@@ -29,10 +30,9 @@ defmodule AirtelMoney.Webhooks.VerifierTest do
       secret = "test_secret"
 
       signature =
-        :crypto.mac(:hmac, :sha256, secret, payload1)
-        |> Base.encode16(case: :lower)
+        Base.encode16(:crypto.mac(:hmac, :sha256, secret, payload1), case: :lower)
 
-      assert AirtelMoney.Webhooks.Verifier.verify(payload2, signature, secret) ==
+      assert Verifier.verify(payload2, signature, secret) ==
                {:error, :invalid_signature}
     end
   end
