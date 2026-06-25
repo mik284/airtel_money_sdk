@@ -47,7 +47,7 @@ defmodule AirtelMoney.MixProject do
     [
       name: "airtel_money",
       licenses: ["MIT"],
-      links: %{"GitHub" => "https://github.com/mk284/airtel_money"},
+      links: %{"GitHub" => "https://github.com/mik284/airtel_money_sdk"},
       files: ~w(lib mix.exs README.md LICENSE)
     ]
   end

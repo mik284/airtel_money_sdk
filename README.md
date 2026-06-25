@@ -216,7 +216,7 @@ mix test
 Run tests with coverage:
 
 ```bash
-mix test.cover
+mix test.ci
 ```
 
 ## Development
