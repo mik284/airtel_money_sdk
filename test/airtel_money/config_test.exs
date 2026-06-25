@@ -90,6 +90,7 @@ defmodule AirtelMoney.ConfigTest do
 
     test "collections_url/1 for DRC market" do
       config = %{environment: :sandbox, country: "CD"}
+
       assert AirtelMoney.Config.collections_url(config) ==
                "https://openapiuat.airtel.cd/merchant/v2/payments/"
     end
@@ -101,6 +102,7 @@ defmodule AirtelMoney.ConfigTest do
 
     test "disbursements_url/1 for DRC market" do
       config = %{environment: :sandbox, country: "CD"}
+
       assert AirtelMoney.Config.disbursements_url(config) ==
                "https://openapiuat.airtel.cd/standard/v2/disbursements/"
     end
@@ -112,6 +114,7 @@ defmodule AirtelMoney.ConfigTest do
 
     test "transaction_status_url/2 for DRC market" do
       config = %{environment: :sandbox, country: "CD"}
+
       assert AirtelMoney.Config.transaction_status_url(config, "TXN123") ==
                "https://openapiuat.airtel.cd/standard/v1/payments/TXN123"
     end
@@ -123,16 +126,20 @@ defmodule AirtelMoney.ConfigTest do
 
     test "balance_url/1 for DRC market" do
       config = %{environment: :sandbox, country: "CD"}
+
       assert AirtelMoney.Config.balance_url(config) ==
                "https://openapiuat.airtel.cd/standard/v2/users/balance"
     end
 
     test "DRC market uses different base URL for all endpoints" do
       config = %{environment: :sandbox, country: "CD", currency: "CDF"}
+
       assert AirtelMoney.Config.token_url(config) ==
                "https://openapiuat.airtel.cd/auth/oauth2/token"
+
       assert AirtelMoney.Config.collections_url(config) ==
                "https://openapiuat.airtel.cd/merchant/v2/payments/"
+
       assert AirtelMoney.Config.balance_url(config) ==
                "https://openapiuat.airtel.cd/standard/v2/users/balance"
     end

@@ -110,14 +110,24 @@ end
 IO.puts("\n7. Testing function existence...")
 IO.puts("Collections.collect/1: #{is_function(&AirtelMoney.Collections.collect/1)}")
 IO.puts("Disbursements.disburse/1: #{is_function(&AirtelMoney.Disbursements.disburse/1)}")
-IO.puts("Disbursements.validate_payee/2: #{is_function(&AirtelMoney.Disbursements.validate_payee/2)}")
-IO.puts("Disbursements.transfer_status/1: #{is_function(&AirtelMoney.Disbursements.transfer_status/1)}")
+
+IO.puts(
+  "Disbursements.validate_payee/2: #{is_function(&AirtelMoney.Disbursements.validate_payee/2)}"
+)
+
+IO.puts(
+  "Disbursements.transfer_status/1: #{is_function(&AirtelMoney.Disbursements.transfer_status/1)}"
+)
+
 IO.puts("Transactions.status/1: #{is_function(&AirtelMoney.Transactions.status/1)}")
 IO.puts("Balance.query/0: #{is_function(&AirtelMoney.Balance.query/0)}")
 IO.puts("TokenManager.token/0: #{is_function(&AirtelMoney.TokenManager.token/0)}")
 IO.puts("Utils.validate_msisdn/1: #{is_function(&AirtelMoney.Utils.validate_msisdn/1)}")
 IO.puts("Encryption.encrypt_pin/1: #{is_function(&AirtelMoney.Encryption.encrypt_pin/1)}")
-IO.puts("Encryption.fetch_public_key/0: #{is_function(&AirtelMoney.Encryption.fetch_public_key/0)}")
+
+IO.puts(
+  "Encryption.fetch_public_key/0: #{is_function(&AirtelMoney.Encryption.fetch_public_key/0)}"
+)
 
 IO.puts("\n✓ All basic tests completed!")
 IO.puts("\nNote: API calls will fail with test credentials.")
