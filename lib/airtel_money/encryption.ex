@@ -76,24 +76,24 @@ defmodule AirtelMoney.Encryption do
     case Base.decode64(public_key) do
       {:ok, key_der} ->
         try do
-          # Decode the DER to get RSAPublicKey entry
-          key_entry = :public_key.der_decode(:SubjectPublicKeyInfo, key_der)
+          # Decode the DER to get SubjectPublicKeyInfo
+          {:SubjectPublicKeyInfo, _, _, rsa_key_der, _} =
+            :public_key.der_decode(:SubjectPublicKeyInfo, key_der)
 
-          case key_entry do
-            {:RSAPublicKey, rsa_key_der} ->
-              # Encrypt the PIN using RSA with OAEP padding and SHA-256
-              pin_bytes = :public_key.encrypt_public(
-                pin,
-                {:RSAPublicKey, rsa_key_der},
-                {:rsa_pkcs1_oaep_padding, :sha256}
-              )
-              # Encode to base64
-              encrypted = Base.encode64(pin_bytes)
-              {:ok, encrypted}
+          # Decode the RSA public key to get modulus and exponent
+          {:RSAPublicKey, modulus, exponent} = :public_key.der_decode(:RSAPublicKey, rsa_key_der)
 
-            _ ->
-              {:error, "Invalid RSA public key format"}
-          end
+          # Encrypt the PIN using RSA with OAEP padding and SHA-256
+          pin_bytes =
+            :public_key.encrypt_public(
+              pin,
+              {:RSAPublicKey, modulus, exponent},
+              [{:rsa_padding, :rsa_pkcs1_oaep_padding}, {:rsa_oaep_md, :sha256}]
+            )
+
+          # Encode to base64
+          encrypted = Base.encode64(pin_bytes)
+          {:ok, encrypted}
         rescue
           e ->
             Logger.error("PIN encryption failed: #{Exception.message(e)}")

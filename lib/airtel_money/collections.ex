@@ -41,7 +41,7 @@ defmodule AirtelMoney.Collections do
 
   defp validate_params(params) do
     with {:ok, _} <- validate_required(params, [:amount, :msisdn, :reference]),
-         {:ok, _} <- AirtelMoney.Utils.validate_msisdn(Map.get(params, :msisdn)) do
+         :ok <- AirtelMoney.Utils.validate_msisdn(Map.get(params, :msisdn)) do
       :ok
     end
   end
