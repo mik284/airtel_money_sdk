@@ -31,7 +31,7 @@ jobs:
         run: mix test
 
       - name: Run tests with coverage
-        run: mix test.cover
+        run: mix test.ci
 
       - name: Upload coverage reports
         uses: codecov/codecov-action@v3
