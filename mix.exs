@@ -12,7 +12,9 @@ defmodule AirtelMoney.MixProject do
       deps: deps(),
       package: package(),
       description: description(),
-      docs: docs()
+      docs: docs(),
+      source_url: "https://github.com/mik284/airtel_money_sdk",
+      homepage_url: "https://github.com/mik284/airtel_money_sdk"
     ]
   end
 
@@ -47,8 +49,12 @@ defmodule AirtelMoney.MixProject do
     [
       name: "airtel_money",
       licenses: ["MIT"],
-      links: %{"GitHub" => "https://github.com/mik284/airtel_money_sdk"},
-      files: ~w(lib mix.exs README.md LICENSE)
+      links: %{
+        "GitHub" => "https://github.com/mik284/airtel_money_sdk",
+        "Documentation" => "https://hexdocs.pm/airtel_money"
+      },
+      files: ~w(lib mix.exs README.md LICENSE),
+      build_tools: ["mix"]
     ]
   end
 

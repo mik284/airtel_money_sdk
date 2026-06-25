@@ -116,30 +116,6 @@ case AirtelMoney.Encryption.encrypt_pin("1234") do
 end
 ```
 
-### Validate a Payee
-
-```elixir
-case AirtelMoney.Disbursements.validate_payee("2439xxxxxxx", "5000") do
-  {:ok, result} ->
-    IO.inspect(result)
-
-  {:error, %AirtelMoney.Error{message: message}} ->
-    IO.puts("Error: #{message}")
-end
-```
-
-### Check Transfer Status
-
-```elixir
-case AirtelMoney.Disbursements.transfer_status("TXN123") do
-  {:ok, status} ->
-    IO.inspect(status)
-
-  {:error, %AirtelMoney.Error{message: message}} ->
-    IO.puts("Error: #{message}")
-end
-```
-
 ### Query Transaction Status
 
 ```elixir
