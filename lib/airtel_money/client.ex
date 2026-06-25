@@ -45,7 +45,8 @@ defmodule AirtelMoney.Client do
     config = Keyword.fetch!(opts, :config)
     body = Keyword.fetch!(opts, :body)
 
-    req = build_request(config, auth: {:bearer, token}, headers: default_headers(), json: body)
+    headers = default_headers() ++ signature_headers(config)
+    req = build_request(config, auth: {:bearer, token}, headers: headers, json: body)
     execute_request(req, :post, url, endpoint)
   end
 
@@ -61,11 +62,27 @@ defmodule AirtelMoney.Client do
   defp default_headers do
     [
       {"content-type", "application/json"},
-      {"accept", "application/json"},
+      {"accept", "*/*"},
       {"x-country", Application.get_env(:airtel_money, :country, "")},
       {"x-currency", Application.get_env(:airtel_money, :currency, "")}
     ]
   end
+
+  defp signature_headers(config) do
+    if Map.get(config, :country) == "CD" do
+      signature = Application.get_env(:airtel_money, :x_signature)
+      key = Application.get_env(:airtel_money, :x_key)
+
+      []
+      |> maybe_add_header("x-signature", signature)
+      |> maybe_add_header("x-key", key)
+    else
+      []
+    end
+  end
+
+  defp maybe_add_header(headers, _key, nil), do: headers
+  defp maybe_add_header(headers, key, value), do: headers ++ [{key, value}]
 
   defp token_headers do
     [
@@ -113,6 +130,7 @@ defmodule AirtelMoney.Client do
 
   defp handle_response({:ok, %{status: status, body: body}}, start_time, endpoint) do
     emit_telemetry_for_response(:failure, endpoint, start_time, status)
+    Logger.error("API request failed: status=#{status}, body=#{inspect(body)}")
     {:error, AirtelMoney.Error.from_response(body, status)}
   end
 
