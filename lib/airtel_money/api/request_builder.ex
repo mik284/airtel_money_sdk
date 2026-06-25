@@ -28,8 +28,13 @@ defmodule AirtelMoney.Api.RequestBuilder do
         amount: Map.get(params, :amount),
         country: Map.get(config, :country),
         currency: Map.get(config, :currency),
-        id: Map.get(params, :id) || Map.get(params, :reference)
+        id: Map.get(params, :transaction_id) || generate_transaction_id()
       }
     }
+  end
+
+  defp generate_transaction_id do
+    # Generate a random unique ID for transaction
+    Base.encode16(:crypto.strong_rand_bytes(16), case: :lower)
   end
 end
