@@ -141,7 +141,7 @@ defmodule AirtelMoney.Config do
   end
 
   def collections_url(config) do
-    "#{base_url(config)}/merchant/v1/payments"
+    "#{base_url(config)}/merchant/v1/payments/"
   end
 
   @doc """
@@ -171,7 +171,7 @@ defmodule AirtelMoney.Config do
   end
 
   def transaction_status_url(config, transaction_id) do
-    "#{base_url(config)}/merchant/v1/payments/#{transaction_id}"
+    "#{base_url(config)}/standard/v1/payments/#{transaction_id}"
   end
 
   @doc """
@@ -182,11 +182,11 @@ defmodule AirtelMoney.Config do
   """
   @spec balance_url(map()) :: String.t()
   def balance_url(%{country: "CD"} = config) do
-    "#{base_url(config)}/standard/v2/users/balance"
+    "#{base_url(config)}/standard/v1/users/balance"
   end
 
   def balance_url(config) do
-    "#{base_url(config)}/merchant/v1/balance"
+    "#{base_url(config)}/standard/v1/users/balance"
   end
 
   @doc """
@@ -195,13 +195,5 @@ defmodule AirtelMoney.Config do
   @spec payee_validation_url(map()) :: String.t()
   def payee_validation_url(config) do
     "#{base_url(config)}/openapi/moneytransfer/v2/validate"
-  end
-
-  @doc """
-  Returns the transfer status check endpoint.
-  """
-  @spec transfer_status_url(map()) :: String.t()
-  def transfer_status_url(config) do
-    "#{base_url(config)}/openapi/moneytransfer/v2/checkstatus"
   end
 end
