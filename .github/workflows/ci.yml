@@ -30,14 +30,6 @@ jobs:
       - name: Run tests
         run: mix test
 
-      - name: Run tests with coverage
-        run: MIX_ENV=test mix test.ci
-
-      - name: Upload coverage reports
-        uses: codecov/codecov-action@v3
-        with:
-          files: cover/excoveralls.json
-
   lint:
     runs-on: ubuntu-latest
 
