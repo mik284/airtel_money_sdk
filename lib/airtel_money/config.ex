@@ -188,12 +188,4 @@ defmodule AirtelMoney.Config do
   def balance_url(config) do
     "#{base_url(config)}/standard/v1/users/balance"
   end
-
-  @doc """
-  Returns the payee validation endpoint.
-  """
-  @spec payee_validation_url(map()) :: String.t()
-  def payee_validation_url(config) do
-    "#{base_url(config)}/openapi/moneytransfer/v2/validate"
-  end
 end

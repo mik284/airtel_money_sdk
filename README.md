@@ -6,7 +6,6 @@ An Elixir SDK for Airtel Money APIs, providing a clean and idiomatic interface f
 
 - **Collections** - Receive payments from customers (USSD Push)
 - **Disbursements** - Send payments to customers with PIN encryption
-- **Payee Validation** - Validate recipients before disbursement
 - **Transfer Status** - Check disbursement transfer status
 - **Transaction Status** - Query collection transaction status
 - **Balance Queries** - Check account balance

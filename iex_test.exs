@@ -41,7 +41,6 @@ IO.puts("Token URL: #{AirtelMoney.Config.token_url(test_config)}")
 IO.puts("Collections URL: #{AirtelMoney.Config.collections_url(test_config)}")
 IO.puts("Disbursements URL: #{AirtelMoney.Config.disbursements_url(test_config)}")
 IO.puts("Balance URL: #{AirtelMoney.Config.balance_url(test_config)}")
-IO.puts("Payee Validation URL: #{AirtelMoney.Config.payee_validation_url(test_config)}")
 IO.puts("Transfer Status URL: #{AirtelMoney.Config.transfer_status_url(test_config)}")
 
 IO.puts(
@@ -135,6 +134,5 @@ IO.puts("To test with real API, update config/config.exs with valid credentials.
 IO.puts("\nNew features added:")
 IO.puts("- MSISDN validation (AirtelMoney.Utils.validate_msisdn/1)")
 IO.puts("- PIN encryption (AirtelMoney.Encryption.encrypt_pin/1)")
-IO.puts("- Payee validation (AirtelMoney.Disbursements.validate_payee/2)")
 IO.puts("- Transfer status check (AirtelMoney.Disbursements.transfer_status/1)")
 IO.puts("- Updated endpoints for collections, disbursements, and transaction status")
