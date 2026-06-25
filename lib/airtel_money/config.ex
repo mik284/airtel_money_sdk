@@ -39,6 +39,10 @@ defmodule AirtelMoney.Config do
       type: :pos_integer,
       default: 15_000,
       doc: "HTTP request timeout in milliseconds"
+    ],
+    rsa_public_key: [
+      type: :string,
+      doc: "RSA public key for PIN encryption (required for disbursements in production)"
     ]
   ]
 
@@ -92,8 +96,19 @@ defmodule AirtelMoney.Config do
 
   @doc """
   Returns the API base URL based on the environment.
+
+  For DRC market (CD), uses openapi.airtel.cd
+  For other markets, uses openapi.airtel.africa
   """
   @spec base_url(map()) :: String.t()
+  def base_url(%{environment: :sandbox, country: "CD"} = config) do
+    Map.get(config, :host) || "https://openapiuat.airtel.cd"
+  end
+
+  def base_url(%{environment: :production, country: "CD"} = config) do
+    Map.get(config, :host) || "https://openapi.airtel.cd"
+  end
+
   def base_url(%{environment: :sandbox} = config) do
     Map.get(config, :host) || "https://openapi.airtel.africa"
   end
@@ -116,33 +131,77 @@ defmodule AirtelMoney.Config do
 
   @doc """
   Returns the collections endpoint.
+
+  For DRC market (CD), uses /merchant/v2/payments/
+  For other markets, uses /merchant/v1/payments
   """
   @spec collections_url(map()) :: String.t()
+  def collections_url(%{country: "CD"} = config) do
+    "#{base_url(config)}/merchant/v2/payments/"
+  end
+
   def collections_url(config) do
     "#{base_url(config)}/merchant/v1/payments"
   end
 
   @doc """
   Returns the disbursements endpoint.
+
+  For DRC market (CD), uses /standard/v2/disbursements/
+  For other markets, uses /openapi/moneytransfer/v2/credit
   """
   @spec disbursements_url(map()) :: String.t()
+  def disbursements_url(%{country: "CD"} = config) do
+    "#{base_url(config)}/standard/v2/disbursements/"
+  end
+
   def disbursements_url(config) do
-    "#{base_url(config)}/merchant/v1/disbursements"
+    "#{base_url(config)}/openapi/moneytransfer/v2/credit"
   end
 
   @doc """
   Returns the transaction status endpoint.
+
+  For DRC market (CD), uses /standard/v1/payments/{id}
+  For other markets, uses /merchant/v1/payments/{id}
   """
   @spec transaction_status_url(map(), String.t()) :: String.t()
+  def transaction_status_url(%{country: "CD"} = config, transaction_id) do
+    "#{base_url(config)}/standard/v1/payments/#{transaction_id}"
+  end
+
   def transaction_status_url(config, transaction_id) do
     "#{base_url(config)}/merchant/v1/payments/#{transaction_id}"
   end
 
   @doc """
   Returns the balance endpoint.
+
+  For DRC market (CD), uses /standard/v2/users/balance
+  For other markets, uses /merchant/v1/balance
   """
   @spec balance_url(map()) :: String.t()
+  def balance_url(%{country: "CD"} = config) do
+    "#{base_url(config)}/standard/v2/users/balance"
+  end
+
   def balance_url(config) do
     "#{base_url(config)}/merchant/v1/balance"
+  end
+
+  @doc """
+  Returns the payee validation endpoint.
+  """
+  @spec payee_validation_url(map()) :: String.t()
+  def payee_validation_url(config) do
+    "#{base_url(config)}/openapi/moneytransfer/v2/validate"
+  end
+
+  @doc """
+  Returns the transfer status check endpoint.
+  """
+  @spec transfer_status_url(map()) :: String.t()
+  def transfer_status_url(config) do
+    "#{base_url(config)}/openapi/moneytransfer/v2/checkstatus"
   end
 end

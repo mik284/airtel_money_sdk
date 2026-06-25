@@ -13,19 +13,23 @@ defmodule AirtelMoney.Api.RequestBuilder do
 
   ## Returns
 
-  A map with the request body
+  A map with the request body in the correct nested structure
   """
   @spec build_body(map(), map()) :: map()
   def build_body(params, config) do
     %{
-      amount: Map.get(params, :amount),
-      phone: Map.get(params, :msisdn),
-      external_id: Map.get(params, :reference),
-      id_type: Map.get(params, :id_type, "MSISDN"),
-      id_number: Map.get(params, :id_number),
-      callback_url: Map.get(params, :callback_url),
-      country: Map.get(config, :country),
-      currency: Map.get(config, :currency)
+      reference: Map.get(params, :reference),
+      subscriber: %{
+        country: Map.get(config, :country),
+        currency: Map.get(config, :currency),
+        msisdn: Map.get(params, :msisdn)
+      },
+      transaction: %{
+        amount: Map.get(params, :amount),
+        country: Map.get(config, :country),
+        currency: Map.get(config, :currency),
+        id: Map.get(params, :id) || Map.get(params, :reference)
+      }
     }
   end
 end

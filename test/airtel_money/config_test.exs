@@ -42,13 +42,23 @@ defmodule AirtelMoney.ConfigTest do
 
   describe "base_url/1" do
     test "returns sandbox URL for sandbox environment" do
-      config = %{environment: :sandbox}
+      config = %{environment: :sandbox, country: "KE"}
       assert AirtelMoney.Config.base_url(config) == "https://openapi.airtel.africa"
     end
 
     test "returns production URL for production environment" do
-      config = %{environment: :production}
+      config = %{environment: :production, country: "KE"}
       assert AirtelMoney.Config.base_url(config) == "https://openapi.airtel.africa"
+    end
+
+    test "returns DRC sandbox URL for DRC country" do
+      config = %{environment: :sandbox, country: "CD"}
+      assert AirtelMoney.Config.base_url(config) == "https://openapiuat.airtel.cd"
+    end
+
+    test "returns DRC production URL for DRC country" do
+      config = %{environment: :production, country: "CD"}
+      assert AirtelMoney.Config.base_url(config) == "https://openapi.airtel.cd"
     end
 
     test "returns custom host when provided" do
@@ -61,8 +71,8 @@ defmodule AirtelMoney.ConfigTest do
     setup do
       config = %{
         environment: :sandbox,
-        country: "CD",
-        currency: "CDF"
+        country: "KE",
+        currency: "KES"
       }
 
       {:ok, config: config}
@@ -73,24 +83,58 @@ defmodule AirtelMoney.ConfigTest do
                "https://openapi.airtel.africa/auth/oauth2/token"
     end
 
-    test "collections_url/1", %{config: config} do
+    test "collections_url/1 for non-DRC markets", %{config: config} do
       assert AirtelMoney.Config.collections_url(config) ==
                "https://openapi.airtel.africa/merchant/v1/payments"
     end
 
-    test "disbursements_url/1", %{config: config} do
-      assert AirtelMoney.Config.disbursements_url(config) ==
-               "https://openapi.airtel.africa/merchant/v1/disbursements"
+    test "collections_url/1 for DRC market" do
+      config = %{environment: :sandbox, country: "CD"}
+      assert AirtelMoney.Config.collections_url(config) ==
+               "https://openapiuat.airtel.cd/merchant/v2/payments/"
     end
 
-    test "transaction_status_url/2", %{config: config} do
+    test "disbursements_url/1 for non-DRC markets", %{config: config} do
+      assert AirtelMoney.Config.disbursements_url(config) ==
+               "https://openapi.airtel.africa/openapi/moneytransfer/v2/credit"
+    end
+
+    test "disbursements_url/1 for DRC market" do
+      config = %{environment: :sandbox, country: "CD"}
+      assert AirtelMoney.Config.disbursements_url(config) ==
+               "https://openapiuat.airtel.cd/standard/v2/disbursements/"
+    end
+
+    test "transaction_status_url/2 for non-DRC markets", %{config: config} do
       assert AirtelMoney.Config.transaction_status_url(config, "TXN123") ==
                "https://openapi.airtel.africa/merchant/v1/payments/TXN123"
     end
 
-    test "balance_url/1", %{config: config} do
+    test "transaction_status_url/2 for DRC market" do
+      config = %{environment: :sandbox, country: "CD"}
+      assert AirtelMoney.Config.transaction_status_url(config, "TXN123") ==
+               "https://openapiuat.airtel.cd/standard/v1/payments/TXN123"
+    end
+
+    test "balance_url/1 for non-DRC markets", %{config: config} do
       assert AirtelMoney.Config.balance_url(config) ==
                "https://openapi.airtel.africa/merchant/v1/balance"
+    end
+
+    test "balance_url/1 for DRC market" do
+      config = %{environment: :sandbox, country: "CD"}
+      assert AirtelMoney.Config.balance_url(config) ==
+               "https://openapiuat.airtel.cd/standard/v2/users/balance"
+    end
+
+    test "DRC market uses different base URL for all endpoints" do
+      config = %{environment: :sandbox, country: "CD", currency: "CDF"}
+      assert AirtelMoney.Config.token_url(config) ==
+               "https://openapiuat.airtel.cd/auth/oauth2/token"
+      assert AirtelMoney.Config.collections_url(config) ==
+               "https://openapiuat.airtel.cd/merchant/v2/payments/"
+      assert AirtelMoney.Config.balance_url(config) ==
+               "https://openapiuat.airtel.cd/standard/v2/users/balance"
     end
   end
 end

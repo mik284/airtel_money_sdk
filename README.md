@@ -4,11 +4,15 @@ An Elixir SDK for Airtel Money APIs, providing a clean and idiomatic interface f
 
 ## Features
 
-- **Collections** - Receive payments from customers
-- **Disbursements** - Send payments to customers
-- **Transaction Status** - Query transaction status
+- **Collections** - Receive payments from customers (USSD Push)
+- **Disbursements** - Send payments to customers with PIN encryption
+- **Payee Validation** - Validate recipients before disbursement
+- **Transfer Status** - Check disbursement transfer status
+- **Transaction Status** - Query collection transaction status
 - **Balance Queries** - Check account balance
 - **OAuth Token Management** - Automatic token handling and refresh
+- **PIN Encryption** - RSA encryption for disbursement PINs
+- **MSISDN Validation** - Phone number format validation
 - **Webhook Verification** - HMAC SHA256 signature verification
 - **Telemetry** - Built-in telemetry events for monitoring
 - **OTP Supervision** - Robust supervision tree for production use
@@ -57,6 +61,7 @@ config :airtel_money,
 - `:timeout` (optional) - HTTP request timeout in milliseconds (default: 15000)
 - `:pool_size` (optional) - Connection pool size (default: 10)
 - `:webhook_secret` (optional) - Webhook signature secret for verification
+- `:rsa_public_key` (optional) - RSA public key for PIN encryption (required for disbursements in production)
 
 ## Usage
 
@@ -90,13 +95,45 @@ end
 ### Disburse a Payment
 
 ```elixir
-case AirtelMoney.disburse(%{
-  amount: "5000",
-  msisdn: "2439xxxxxxx",
-  reference: "PAY-001"
-}) do
+# For production, you need to encrypt the PIN first
+case AirtelMoney.Encryption.encrypt_pin("1234") do
+  {:ok, encrypted_pin} ->
+    case AirtelMoney.disburse(%{
+      amount: "5000",
+      msisdn: "2439xxxxxxx",
+      reference: "PAY-001",
+      pin: encrypted_pin
+    }) do
+      {:ok, result} ->
+        IO.inspect(result)
+
+      {:error, %AirtelMoney.Error{message: message}} ->
+        IO.puts("Error: #{message}")
+    end
+
+  {:error, reason} ->
+    IO.puts("PIN encryption failed: #{reason}")
+end
+```
+
+### Validate a Payee
+
+```elixir
+case AirtelMoney.Disbursements.validate_payee("2439xxxxxxx", "5000") do
   {:ok, result} ->
     IO.inspect(result)
+
+  {:error, %AirtelMoney.Error{message: message}} ->
+    IO.puts("Error: #{message}")
+end
+```
+
+### Check Transfer Status
+
+```elixir
+case AirtelMoney.Disbursements.transfer_status("TXN123") do
+  {:ok, status} ->
+    IO.inspect(status)
 
   {:error, %AirtelMoney.Error{message: message}} ->
     IO.puts("Error: #{message}")
@@ -124,6 +161,31 @@ case AirtelMoney.balance() do
 
   {:error, %AirtelMoney.Error{message: message}} ->
     IO.puts("Error: #{message}")
+end
+```
+
+### Validate MSISDN
+
+```elixir
+case AirtelMoney.Utils.validate_msisdn("243900000000") do
+  :ok ->
+    IO.puts("Valid MSISDN")
+
+  {:error, reason} ->
+    IO.puts("Invalid MSISDN: #{reason}")
+end
+```
+
+### Fetch RSA Public Key
+
+```elixir
+case AirtelMoney.Encryption.fetch_public_key() do
+  {:ok, public_key} ->
+    IO.puts("Public key fetched successfully")
+    # Store this key in your config for future use
+
+  {:error, error} ->
+    IO.puts("Failed to fetch public key: #{error.message}")
 end
 ```
 
