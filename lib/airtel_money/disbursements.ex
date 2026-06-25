@@ -2,7 +2,7 @@ defmodule AirtelMoney.Disbursements do
   @moduledoc """
   Module for Airtel Money Disbursements API.
 
-  Allows sending payments to customers.
+  Allows sending payments to customers, validating payees, and checking transfer status.
   """
 
   @doc """
@@ -11,16 +11,20 @@ defmodule AirtelMoney.Disbursements do
   ## Parameters
 
   * `params` - A map with the following keys:
-    * `:amount` - Amount to disburse (string)
-    * `:msisdn` - Recipient phone number (string)
-    * `:reference` - Transaction reference (string)
-    * `:id_type` - Optional ID type (default: "MSISDN")
-    * `:id_number` - Optional ID number
-    * `:callback_url` - Optional callback URL
+    * `:msisdn` - Recipient phone number (string, required)
+    * `:amount` - Amount to disburse (string, required)
+    * `:reference` - Transaction reference (string, required)
+    * `:id` - Optional unique transaction ID (defaults to reference)
+    * `:pin` - Optional encrypted PIN (required for production)
+    * `:payee_wallet_type` - Wallet type (default: "COLL")
+    * `:payee_currency` - Payee currency (default: config currency)
+    * `:payee_name` - Optional payee name
+    * `:transaction_type` - Transaction type (default: "B2C")
+    * `:version_tag` - API version (default: "v2")
 
   ## Examples
 
-      iex> params = %{amount: "5000", msisdn: "2439xxxxxxx", reference: "PAY-001"}
+      iex> _params = %{amount: "5000", msisdn: "2439xxxxxxx", reference: "PAY-001"}
       iex> # This would normally call the API, but for doctest we skip the actual call
       iex> :ok
       :ok
@@ -40,7 +44,120 @@ defmodule AirtelMoney.Disbursements do
     end
   end
 
+  @doc """
+  Validates a payee before disbursement.
+
+  ## Parameters
+
+  * `msisdn` - Recipient phone number (string)
+  * `amount` - Amount to validate (string)
+
+  ## Examples
+
+      iex> # This would normally call the API, but for doctest we skip the actual call
+      iex> :ok
+      :ok
+  """
+  @spec validate_payee(String.t(), String.t()) :: {:ok, map()} | {:error, AirtelMoney.Error.t()}
+  def validate_payee(msisdn, amount) do
+    with {:ok, token} <- AirtelMoney.TokenManager.token(),
+         config <- AirtelMoney.Config.get!(),
+         url <- AirtelMoney.Config.payee_validation_url(config) do
+      body = %{
+        msisdn: msisdn,
+        amount: amount
+      }
+
+      AirtelMoney.Client.post(url,
+        token: token,
+        endpoint: :payee_validation,
+        config: config,
+        body: body
+      )
+    end
+  end
+
+  @doc """
+  Checks the status of a disbursement transfer.
+
+  ## Parameters
+
+  * `transaction_id` - The transaction ID to check
+
+  ## Examples
+
+      iex> # This would normally call the API, but for doctest we skip the actual call
+      iex> :ok
+      :ok
+  """
+  @spec transfer_status(String.t()) :: {:ok, map()} | {:error, AirtelMoney.Error.t()}
+  def transfer_status(transaction_id) when is_binary(transaction_id) do
+    with {:ok, token} <- AirtelMoney.TokenManager.token(),
+         config <- AirtelMoney.Config.get!(),
+         url <- AirtelMoney.Config.transfer_status_url(config) do
+      body = %{
+        transaction_id: transaction_id
+      }
+
+      AirtelMoney.Client.post(url,
+        token: token,
+        endpoint: :transfer_status,
+        config: config,
+        body: body
+      )
+    end
+  end
+
   defp build_disbursement_body(params, config) do
-    AirtelMoney.Api.RequestBuilder.build_body(params, config)
+    if Map.get(config, :country) == "CD" do
+      build_drc_disbursement_body(params, config)
+    else
+      build_standard_disbursement_body(params, config)
+    end
+  end
+
+  defp build_drc_disbursement_body(params, config) do
+    %{
+      payee: build_payee_object(params, config),
+      reference: Map.get(params, :reference),
+      pin: Map.get(params, :pin),
+      transaction: build_transaction_object(params)
+    }
+    |> Enum.reject(fn {_, v} -> is_nil(v) end)
+    |> Map.new()
+  end
+
+  defp build_payee_object(params, config) do
+    %{
+      currency: Map.get(params, :payee_currency) || Map.get(config, :currency),
+      msisdn: Map.get(params, :msisdn),
+      name: Map.get(params, :payee_name)
+    }
+  end
+
+  defp build_transaction_object(params) do
+    %{
+      amount: Map.get(params, :amount),
+      id: Map.get(params, :id) || Map.get(params, :reference),
+      type: Map.get(params, :transaction_type, "B2B")
+    }
+  end
+
+  defp build_standard_disbursement_body(params, config) do
+    %{
+      payee_msisdn: Map.get(params, :msisdn),
+      payee_wallet_type: Map.get(params, :payee_wallet_type, "COLL"),
+      payee_currency: Map.get(params, :payee_currency) || Map.get(config, :currency),
+      payee_name: Map.get(params, :payee_name),
+      reference: Map.get(params, :reference),
+      pin: Map.get(params, :pin),
+      pin_encrypted: Map.get(params, :pin_encrypted),
+      amount: Map.get(params, :amount),
+      transaction_id: Map.get(params, :id) || Map.get(params, :reference),
+      transaction_type: Map.get(params, :transaction_type, "B2C"),
+      version_tag: Map.get(params, :version_tag, "v2")
+    }
+    |> Enum.reject(fn {_, v} -> is_nil(v) end)
+    |> Map.new()
   end
 end
