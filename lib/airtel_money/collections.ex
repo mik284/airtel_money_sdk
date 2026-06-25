@@ -41,6 +41,7 @@ defmodule AirtelMoney.Collections do
 
   defp validate_params(params) do
     with {:ok, _} <- validate_required(params, [:amount, :msisdn, :reference]),
+         :ok <- validate_reference(Map.get(params, :reference)),
          :ok <- AirtelMoney.Utils.validate_msisdn(Map.get(params, :msisdn)) do
       :ok
     end
@@ -54,6 +55,21 @@ defmodule AirtelMoney.Collections do
       keys -> {:error, "Missing required parameters: #{Enum.join(keys, ", ")}"}
     end
   end
+
+  defp validate_reference(reference) when is_binary(reference) do
+    cond do
+      String.length(reference) > 64 ->
+        {:error, "Reference must be max 64 characters"}
+
+      not String.match?(reference, ~r/^[a-zA-Z0-9\-]+$/) ->
+        {:error, "Reference must be alphanumeric only (hyphens allowed)"}
+
+      true ->
+        :ok
+    end
+  end
+
+  defp validate_reference(_), do: {:error, "Reference must be a string"}
 
   defp build_collection_body(params, config) do
     # DRC market uses different structure with subscriber and transaction objects
