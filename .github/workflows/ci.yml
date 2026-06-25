@@ -1,0 +1,78 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        elixir: ['1.14', '1.15', '1.16']
+        otp: ['25', '26', '27']
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup elixir
+        uses: erlef/setup-beam@v1
+        with:
+          elixir-version: ${{ matrix.elixir }}
+          otp-version: ${{ matrix.otp }}
+
+      - name: Install dependencies
+        run: mix deps.get
+
+      - name: Run tests
+        run: mix test
+
+      - name: Run tests with coverage
+        run: mix test.cover
+
+      - name: Upload coverage reports
+        uses: codecov/codecov-action@v3
+        with:
+          files: cover/excoveralls.json
+
+  lint:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup elixir
+        uses: erlef/setup-beam@v1
+        with:
+          elixir-version: '1.16'
+          otp-version: '27'
+
+      - name: Install dependencies
+        run: mix deps.get
+
+      - name: Run format check
+        run: mix format --check-formatted
+
+      - name: Run credo
+        run: mix credo --strict
+
+  dialyzer:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup elixir
+        uses: erlef/setup-beam@v1
+        with:
+          elixir-version: '1.16'
+          otp-version: '27'
+
+      - name: Install dependencies
+        run: mix deps.get
+
+      - name: Run dialyzer
+        run: mix dialyzer
