@@ -1,19 +1,19 @@
 defmodule AirtelMoney.Encryption do
   @moduledoc """
-  Encryption module for Airtel Money disbursement PIN encryption.
+  Encryption module for Airtel Money PIN encryption.
 
-  Uses RSA public key encryption for PIN protection as required by Airtel Money API.
+  Uses RSA public key encryption with OAEP padding for PIN protection as required by Airtel Money API.
   """
 
   require Logger
 
   @doc """
-  Encrypts a PIN using RSA encryption with Airtel's public key.
+  Encrypts a PIN using RSA encryption with OAEP padding and Airtel's public key.
 
   ## Parameters
 
   * `pin` - The PIN to encrypt (string)
-  * `public_key` - Airtel's RSA public key (optional, will use config if not provided)
+  * `public_key` - Airtel's RSA public key in Base64 DER format (optional, will use config if not provided)
 
   ## Returns
 
@@ -52,13 +52,14 @@ defmodule AirtelMoney.Encryption do
     with {:ok, token} <- AirtelMoney.TokenManager.token(),
          config <- AirtelMoney.Config.get!(),
          url <- "#{AirtelMoney.Config.base_url(config)}/v1/rsa/encryption-keys",
-         {:ok, response} <- AirtelMoney.Client.get(url, token: token, endpoint: :rsa_keys, config: config) do
+         {:ok, response} <-
+           AirtelMoney.Client.get(url, token: token, endpoint: :rsa_keys, config: config) do
       extract_public_key(response)
     end
   end
 
   defp extract_public_key(response) do
-    case Map.get(response, "public_key") do
+    case get_in(response, ["data", "key"]) do
       nil -> {:error, AirtelMoney.Error.from_message("No public key in response")}
       key -> {:ok, key}
     end
@@ -71,25 +72,36 @@ defmodule AirtelMoney.Encryption do
   end
 
   defp do_encrypt(pin, public_key) do
-    # Decode the public key from PEM format
-    key_entry = :public_key.pem_decode(public_key)
-
-    case key_entry do
-      [{:RSAPublicKey, key_der, :not_encrypted}] ->
+    # Decode Base64 to get DER format
+    case Base.decode64(public_key) do
+      {:ok, key_der} ->
         try do
-          # Encrypt the PIN using RSA
-          pin_bytes = :public_key.encrypt_public(pin, {:RSAPublicKey, key_der})
-          # Encode to base64
-          encrypted = Base.encode64(pin_bytes)
-          {:ok, encrypted}
+          # Decode the DER to get RSAPublicKey entry
+          key_entry = :public_key.der_decode(:SubjectPublicKeyInfo, key_der)
+
+          case key_entry do
+            {:RSAPublicKey, rsa_key_der} ->
+              # Encrypt the PIN using RSA with OAEP padding and SHA-256
+              pin_bytes = :public_key.encrypt_public(
+                pin,
+                {:RSAPublicKey, rsa_key_der},
+                {:rsa_pkcs1_oaep_padding, :sha256}
+              )
+              # Encode to base64
+              encrypted = Base.encode64(pin_bytes)
+              {:ok, encrypted}
+
+            _ ->
+              {:error, "Invalid RSA public key format"}
+          end
         rescue
           e ->
             Logger.error("PIN encryption failed: #{Exception.message(e)}")
             {:error, "Failed to encrypt PIN: #{Exception.message(e)}"}
         end
 
-      _ ->
-        {:error, "Invalid RSA public key format"}
+      :error ->
+        {:error, "Invalid Base64 format for public key"}
     end
   end
 end

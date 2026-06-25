@@ -6,7 +6,8 @@ config :airtel_money,
   client_id: "test_client_id",
   client_secret: "test_client_secret",
   country: "CD",
-  currency: "CDF"
+  currency: "CDF",
+  host: "https://openapiuat.airtel.cd"
 
 # Print only warnings and errors during test
 config :logger, level: :warning
