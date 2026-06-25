@@ -69,15 +69,18 @@ defmodule AirtelMoney.ConfigTest do
     end
 
     test "token_url/1", %{config: config} do
-      assert AirtelMoney.Config.token_url(config) == "https://openapi.airtel.africa/auth/oauth2/token"
+      assert AirtelMoney.Config.token_url(config) ==
+               "https://openapi.airtel.africa/auth/oauth2/token"
     end
 
     test "collections_url/1", %{config: config} do
-      assert AirtelMoney.Config.collections_url(config) == "https://openapi.airtel.africa/merchant/v1/payments"
+      assert AirtelMoney.Config.collections_url(config) ==
+               "https://openapi.airtel.africa/merchant/v1/payments"
     end
 
     test "disbursements_url/1", %{config: config} do
-      assert AirtelMoney.Config.disbursements_url(config) == "https://openapi.airtel.africa/merchant/v1/disbursements"
+      assert AirtelMoney.Config.disbursements_url(config) ==
+               "https://openapi.airtel.africa/merchant/v1/disbursements"
     end
 
     test "transaction_status_url/2", %{config: config} do
@@ -86,7 +89,8 @@ defmodule AirtelMoney.ConfigTest do
     end
 
     test "balance_url/1", %{config: config} do
-      assert AirtelMoney.Config.balance_url(config) == "https://openapi.airtel.africa/merchant/v1/balance"
+      assert AirtelMoney.Config.balance_url(config) ==
+               "https://openapi.airtel.africa/merchant/v1/balance"
     end
   end
 end

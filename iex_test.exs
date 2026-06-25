@@ -7,6 +7,7 @@ IO.puts("==========================")
 
 # Test configuration validation
 IO.puts("\n1. Testing configuration validation...")
+
 config = [
   client_id: "test_id",
   client_secret: "test_secret",
@@ -40,7 +41,10 @@ IO.puts("Token URL: #{AirtelMoney.Config.token_url(test_config)}")
 IO.puts("Collections URL: #{AirtelMoney.Config.collections_url(test_config)}")
 IO.puts("Disbursements URL: #{AirtelMoney.Config.disbursements_url(test_config)}")
 IO.puts("Balance URL: #{AirtelMoney.Config.balance_url(test_config)}")
-IO.puts("Transaction Status URL: #{AirtelMoney.Config.transaction_status_url(test_config, "TXN123")}")
+
+IO.puts(
+  "Transaction Status URL: #{AirtelMoney.Config.transaction_status_url(test_config, "TXN123")}"
+)
 
 # Test webhook parsing
 IO.puts("\n4. Testing webhook parsing...")

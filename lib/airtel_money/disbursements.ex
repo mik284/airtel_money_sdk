@@ -31,7 +31,12 @@ defmodule AirtelMoney.Disbursements do
          config <- AirtelMoney.Config.get!(),
          url <- AirtelMoney.Config.disbursements_url(config),
          body <- build_disbursement_body(params, config) do
-      AirtelMoney.Client.post(url, token: token, endpoint: :disbursements, config: config, body: body)
+      AirtelMoney.Client.post(url,
+        token: token,
+        endpoint: :disbursements,
+        config: config,
+        body: body
+      )
     end
   end
 

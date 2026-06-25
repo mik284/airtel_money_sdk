@@ -24,7 +24,8 @@ defmodule AirtelMoney.Webhooks.Verifier do
   * `{:error, :invalid_signature}` if the signature is invalid
   """
   @spec verify(String.t(), String.t(), String.t()) :: :ok | {:error, :invalid_signature}
-  def verify(payload, signature, secret) when is_binary(payload) and is_binary(signature) and is_binary(secret) do
+  def verify(payload, signature, secret)
+      when is_binary(payload) and is_binary(signature) and is_binary(secret) do
     expected_signature = compute_signature(payload, secret)
 
     if secure_compare(signature, expected_signature) do
@@ -43,7 +44,8 @@ defmodule AirtelMoney.Webhooks.Verifier do
   defp secure_compare(a, b) when byte_size(a) != byte_size(b), do: false
 
   defp secure_compare(a, b) do
-    if :crypto.bytes_to_integer(:crypto.hash(:md5, a)) == :crypto.bytes_to_integer(:crypto.hash(:md5, b)) do
+    if :crypto.bytes_to_integer(:crypto.hash(:md5, a)) ==
+         :crypto.bytes_to_integer(:crypto.hash(:md5, b)) do
       a == b
     else
       false

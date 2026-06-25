@@ -9,7 +9,8 @@ defmodule AirtelMoney.TokenManager do
   use GenServer
   require Logger
 
-  @refresh_buffer 5 * 60 * 1000 # 5 minutes in milliseconds
+  # 5 minutes in milliseconds
+  @refresh_buffer 5 * 60 * 1000
 
   defstruct [:token, :expires_at, :config]
 
@@ -122,6 +123,7 @@ defmodule AirtelMoney.TokenManager do
 
   defp token_valid?(%__MODULE__{token: nil}), do: false
   defp token_valid?(%__MODULE__{expires_at: nil}), do: false
+
   defp token_valid?(%__MODULE__{expires_at: expires_at}) do
     System.monotonic_time(:millisecond) < expires_at
   end
@@ -141,7 +143,7 @@ defmodule AirtelMoney.TokenManager do
         expires_in = Map.get(response, "expires_in", 3600)
 
         if token do
-          expires_at = System.monotonic_time(:millisecond) + (expires_in * 1000)
+          expires_at = System.monotonic_time(:millisecond) + expires_in * 1000
           {:ok, token, expires_at}
         else
           {:error, AirtelMoney.Error.from_message("No access token in response")}

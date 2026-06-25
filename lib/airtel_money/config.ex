@@ -39,7 +39,7 @@ defmodule AirtelMoney.Config do
       type: :pos_integer,
       default: 15_000,
       doc: "HTTP request timeout in milliseconds"
-    ],
+    ]
   ]
 
   @doc """

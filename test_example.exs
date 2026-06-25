@@ -10,7 +10,8 @@ IO.puts("=========================================")
 # Test collection request
 params = %{
   amount: "1000",
-  msisdn: "254712345678",  # Kenyan phone number
+  # Kenyan phone number
+  msisdn: "254712345678",
   reference: "TEST-001"
 }
 

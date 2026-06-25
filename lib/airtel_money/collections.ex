@@ -31,7 +31,12 @@ defmodule AirtelMoney.Collections do
          config <- AirtelMoney.Config.get!(),
          url <- AirtelMoney.Config.collections_url(config),
          body <- build_collection_body(params, config) do
-      AirtelMoney.Client.post(url, token: token, endpoint: :collections, config: config, body: body)
+      AirtelMoney.Client.post(url,
+        token: token,
+        endpoint: :collections,
+        config: config,
+        body: body
+      )
     end
   end
 
