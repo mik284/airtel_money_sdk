@@ -52,19 +52,16 @@ if Code.ensure_loaded?(Plug) do
       webhook_secret = Map.get(config, :webhook_secret)
 
       if webhook_secret do
-        case AirtelMoney.Webhooks.Parser.extract_hash(body) do
-          {:ok, hash} ->
-            case AirtelMoney.Webhooks.Verifier.verify(body, hash, webhook_secret) do
-              :ok ->
-                parse_and_assign(conn, body)
-
-              {:error, :invalid_signature} ->
-                send_resp(conn, :unauthorized, "Invalid signature")
-                halt(conn)
-            end
-
+        with {:ok, hash} <- AirtelMoney.Webhooks.Parser.extract_hash(body),
+             :ok <- AirtelMoney.Webhooks.Verifier.verify(body, hash, webhook_secret) do
+          parse_and_assign(conn, body)
+        else
           {:error, :missing_hash} ->
             send_resp(conn, :bad_request, "Missing hash in callback body")
+            halt(conn)
+
+          {:error, :invalid_signature} ->
+            send_resp(conn, :unauthorized, "Invalid signature")
             halt(conn)
         end
       else
