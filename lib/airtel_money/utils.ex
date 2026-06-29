@@ -65,4 +65,37 @@ defmodule AirtelMoney.Utils do
   def format_msisdn(msisdn, _country) do
     String.replace(msisdn, ~r/[^0-9]/, "")
   end
+
+  @doc """
+  Formats MSISDN for specific country requirements.
+
+  For Kenya (KE), removes leading zero from MSISDN.
+  For other countries, returns cleaned MSISDN.
+
+  ## Parameters
+
+  * `msisdn` - Phone number string
+  * `country` - Country code (e.g., "KE", "CD")
+
+  ## Returns
+
+  Formatted MSISDN string
+
+  ## Examples
+
+      iex> AirtelMoney.Utils.format_msisdn_for_country("0731732829", "KE")
+      "731732829"
+
+      iex> AirtelMoney.Utils.format_msisdn_for_country("243900000000", "CD")
+      "243900000000"
+  """
+  @spec format_msisdn_for_country(String.t(), String.t()) :: String.t()
+  def format_msisdn_for_country(msisdn, country) do
+    cleaned = String.replace(msisdn, ~r/[^0-9]/, "")
+
+    case country do
+      "KE" -> String.replace_prefix(cleaned, "0", "")
+      _ -> cleaned
+    end
+  end
 end

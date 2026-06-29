@@ -43,6 +43,10 @@ defmodule AirtelMoney.Config do
     rsa_public_key: [
       type: :string,
       doc: "RSA public key for PIN encryption (required for disbursements in production)"
+    ],
+    webhook_secret: [
+      type: :string,
+      doc: "Webhook signature secret for verification"
     ]
   ]
 

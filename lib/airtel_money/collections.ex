@@ -74,12 +74,20 @@ defmodule AirtelMoney.Collections do
   defp build_collection_body(params, config) do
     # DRC market uses different structure with subscriber and transaction objects
     if Map.get(config, :country) == "CD" do
+      country = Map.get(params, :subscriber_country) || Map.get(config, :country)
+
+      formatted_msisdn =
+        AirtelMoney.Utils.format_msisdn_for_country(
+          Map.get(params, :msisdn),
+          country
+        )
+
       %{
         reference: Map.get(params, :reference),
         subscriber: %{
-          country: Map.get(params, :subscriber_country) || Map.get(config, :country),
+          country: country,
           currency: Map.get(params, :subscriber_currency) || Map.get(config, :currency),
-          msisdn: Map.get(params, :msisdn)
+          msisdn: formatted_msisdn
         },
         transaction: %{
           amount: Map.get(params, :amount),

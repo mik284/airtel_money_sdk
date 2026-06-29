@@ -17,16 +17,24 @@ defmodule AirtelMoney.Api.RequestBuilder do
   """
   @spec build_body(map(), map()) :: map()
   def build_body(params, config) do
+    country = Map.get(config, :country)
+
+    formatted_msisdn =
+      AirtelMoney.Utils.format_msisdn_for_country(
+        Map.get(params, :msisdn),
+        country
+      )
+
     %{
       reference: Map.get(params, :reference),
       subscriber: %{
-        country: Map.get(config, :country),
+        country: country,
         currency: Map.get(config, :currency),
-        msisdn: Map.get(params, :msisdn)
+        msisdn: formatted_msisdn
       },
       transaction: %{
         amount: Map.get(params, :amount),
-        country: Map.get(config, :country),
+        country: country,
         currency: Map.get(config, :currency),
         id: Map.get(params, :transaction_id) || generate_transaction_id()
       }
