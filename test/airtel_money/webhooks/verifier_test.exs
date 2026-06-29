@@ -10,7 +10,7 @@ defmodule AirtelMoney.Webhooks.VerifierTest do
       secret = "test_secret"
 
       signature =
-        Base.encode16(:crypto.mac(:hmac, :sha256, secret, payload), case: :lower)
+        Base.encode64(:crypto.mac(:hmac, :sha256, secret, payload))
 
       assert Verifier.verify(payload, signature, secret) == :ok
     end
@@ -30,7 +30,7 @@ defmodule AirtelMoney.Webhooks.VerifierTest do
       secret = "test_secret"
 
       signature =
-        Base.encode16(:crypto.mac(:hmac, :sha256, secret, payload1), case: :lower)
+        Base.encode64(:crypto.mac(:hmac, :sha256, secret, payload1))
 
       assert Verifier.verify(payload2, signature, secret) ==
                {:error, :invalid_signature}

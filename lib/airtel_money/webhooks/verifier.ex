@@ -15,8 +15,8 @@ defmodule AirtelMoney.Webhooks.Verifier do
   ## Parameters
 
   * `payload` - The raw webhook payload (string)
-  * `signature` - The signature from the X-Airtel-Signature header
-  * `secret` - The webhook secret from configuration
+  * `signature` - The hash from the callback JSON body
+  * `secret` - The private key from Airtel application settings
 
   ## Returns
 
@@ -36,7 +36,7 @@ defmodule AirtelMoney.Webhooks.Verifier do
   end
 
   defp compute_signature(payload, secret) do
-    Base.encode16(:crypto.mac(:hmac, :sha256, secret, payload), case: :lower)
+    Base.encode64(:crypto.mac(:hmac, :sha256, secret, payload))
   end
 
   # Constant-time comparison to prevent timing attacks
