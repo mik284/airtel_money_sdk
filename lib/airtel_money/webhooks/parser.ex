@@ -32,6 +32,32 @@ defmodule AirtelMoney.Webhooks.Parser do
     end
   end
 
+  @doc """
+  Extracts the hash from a webhook payload.
+
+  ## Parameters
+
+  * `payload` - The raw JSON payload (string)
+
+  ## Returns
+
+  * `{:ok, hash}` if hash is present
+  * `{:error, :missing_hash}` if hash is not present
+  """
+  @spec extract_hash(String.t()) :: {:ok, String.t()} | {:error, :missing_hash}
+  def extract_hash(payload) when is_binary(payload) do
+    case Jason.decode(payload) do
+      {:ok, %{"hash" => hash}} when is_binary(hash) ->
+        {:ok, hash}
+
+      {:ok, _} ->
+        {:error, :missing_hash}
+
+      {:error, _} ->
+        {:error, :invalid_json}
+    end
+  end
+
   defp normalize_keys(data) when is_map(data) do
     data
     |> Enum.map(fn {k, v} -> {String.to_atom(k), normalize_value(v)} end)
