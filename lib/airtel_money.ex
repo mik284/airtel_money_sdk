@@ -128,22 +128,34 @@ defmodule AirtelMoney do
   ## Parameters
 
   * `payload` - The raw webhook payload (string)
-  * `signature` - The signature from the X-Airtel-Signature header
 
   ## Returns
 
   * `:ok` - Valid signature
   * `{:error, :invalid_signature}` - Invalid signature
+  * `{:error, :missing_hash}` - Hash not found in payload
+  * `{:error, :webhook_secret_not_configured}` - Webhook secret not configured
+
+  ## Note
+
+  The hash is extracted from the JSON body and verified using HMAC SHA256 with Base64 encoding,
+  as per the official Airtel Money API documentation.
   """
-  @spec verify_webhook(String.t(), String.t()) :: :ok | {:error, :invalid_signature}
-  def verify_webhook(payload, signature) do
+  @spec verify_webhook(String.t()) :: :ok | {:error, atom()}
+  def verify_webhook(payload) do
     config = AirtelMoney.Config.get!()
     secret = Map.get(config, :webhook_secret)
 
     if secret do
-      AirtelMoney.Webhooks.Verifier.verify(payload, signature, secret)
+      case AirtelMoney.Webhooks.Parser.extract_hash(payload) do
+        {:ok, hash} ->
+          AirtelMoney.Webhooks.Verifier.verify(payload, hash, secret)
+
+        {:error, reason} ->
+          {:error, reason}
+      end
     else
-      {:error, :invalid_signature}
+      {:error, :webhook_secret_not_configured}
     end
   end
 
