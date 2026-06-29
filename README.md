@@ -166,30 +166,31 @@ end
 
 ## Webhooks
 
-### Verify Webhook Signature
+The SDK supports both authenticated and unauthenticated webhooks as per the official Airtel Money API documentation.
 
-```elixir
-# In your webhook controller
-def handle(conn, params) do
-  signature = get_req_header(conn, "x-airtel-signature")
-  payload = conn.assigns[:raw_body]
+### Webhook Payload Format
 
-  case AirtelMoney.verify_webhook(payload, signature) do
-    :ok ->
-      # Signature is valid, process webhook
-      {:ok, webhook_data} = AirtelMoney.parse_webhook(payload)
-      # Handle webhook_data
-      send_resp(conn, 200, "OK")
+Airtel sends transaction status updates to your callback URL with the following format:
 
-    {:error, :invalid_signature} ->
-      send_resp(conn, 401, "Invalid signature")
-  end
-end
+```json
+{
+  "transaction": {
+    "id": "BBZMiscxy",
+    "message": "Paid KES 5,000 to TECHNOLOGIES LIMITED",
+    "status_code": "TS",
+    "airtel_money_id": "MP210603.1234.L06941"
+  },
+  "hash": "zITVAAGYSlzl1WkUQJn81kbpT5drH3koffT8jCkcJJA="
+}
 ```
+
+Status codes:
+- `TS` - Transaction Success
+- `TF` - Transaction Failed
 
 ### Using the Plug (Phoenix)
 
-Add the plug to your router:
+**With Authentication (Recommended for Production):**
 
 ```elixir
 pipeline :webhooks do
@@ -202,11 +203,73 @@ scope "/webhooks" do
 end
 ```
 
+**Without Authentication (For Testing):**
+
+```elixir
+pipeline :webhooks do
+  plug AirtelMoney.WebhookPlug, require_auth: false
+end
+
+scope "/webhooks" do
+  pipe_through :webhooks
+  post "/airtel", WebhookController, :handle
+end
+```
+
 The plug will:
-- Verify the webhook signature
+- Verify the webhook signature (if `require_auth: true`)
 - Parse the JSON payload
 - Assign the parsed data to `conn.assigns[:airtel_webhook]`
-- Return 401 if verification fails
+- Return 401 if verification fails (when authentication is enabled)
+
+### Webhook Controller Example
+
+```elixir
+defmodule MyAppWeb.WebhookController do
+  use MyAppWeb, :controller
+
+  def handle(conn, _params) do
+    # The plug already verified the signature and parsed the payload
+    webhook_data = conn.assigns[:airtel_webhook]
+    
+    case webhook_data do
+      %{transaction: %{id: txn_id, status_code: status_code}} ->
+        # Update your database based on transaction status
+        if status_code == "TS" do
+          # Transaction successful - update order, send confirmation
+        end
+        
+        if status_code == "TF" do
+          # Transaction failed - notify customer, handle retry
+        end
+      
+      _ ->
+        IO.puts("Unknown webhook format")
+    end
+    
+    send_resp(conn, 200, "OK")
+  end
+end
+```
+
+### Manual Webhook Verification
+
+```elixir
+# Verify webhook signature (hash is extracted from JSON body automatically)
+case AirtelMoney.verify_webhook(payload) do
+  :ok ->
+    # Signature is valid, process webhook
+    {:ok, webhook_data} = AirtelMoney.parse_webhook(payload)
+    # Handle webhook_data
+    
+  {:error, :invalid_signature} ->
+    # Invalid signature
+  {:error, :missing_hash} ->
+    # Hash not found in payload
+  {:error, :webhook_secret_not_configured} ->
+    # Webhook secret not configured
+end
+```
 
 ## Telemetry
 
