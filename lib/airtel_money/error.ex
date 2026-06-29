@@ -84,23 +84,23 @@ defmodule AirtelMoney.Error do
   end
 
   defp extract_error_code(body) do
-    # Kenyan API returns error codes in nested status object
-    case get_in(body, ["status", "response_code"]) do
-      nil ->
-        Map.get(body, "code") ||
-          Map.get(body, :code) ||
-          Map.get(body, "response_code") ||
-          Map.get(body, "error") ||
-          Map.get(body, :error)
-
-      code ->
-        code
-    end
+    # Kenyan API returns error codes in nested status object or at top level
+    get_in(body, ["status", "response_code"]) ||
+      Map.get(body, "status_code") ||
+      Map.get(body, :status_code) ||
+      Map.get(body, "code") ||
+      Map.get(body, :code) ||
+      Map.get(body, "response_code") ||
+      Map.get(body, "error") ||
+      Map.get(body, :error)
   end
 
   defp extract_error_message(body) do
-    # Kenyan API returns errors in nested status object
-    get_in(body, ["status", "message"]) || extract_fallback_message(body)
+    # Kenyan API returns errors in nested status object or at top level
+    get_in(body, ["status", "message"]) ||
+      Map.get(body, "status_message") ||
+      Map.get(body, :status_message) ||
+      extract_fallback_message(body)
   end
 
   defp extract_fallback_message(body) do
